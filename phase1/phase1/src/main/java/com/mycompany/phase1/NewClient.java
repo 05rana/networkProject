@@ -114,7 +114,9 @@ class NewClient implements Runnable {
     public String getUsername() {
         return username;
     }
-
+public void setUsername(String u) {
+         username=u;
+    }
     void sendMessage(String message) {
         out.println(message);  // Implemented to send messages to the client
     }
