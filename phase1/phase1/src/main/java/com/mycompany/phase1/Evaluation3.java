@@ -1,3 +1,4 @@
+
 package com.mycompany.phase1;
 
 import java.io.IOException;
@@ -17,9 +18,13 @@ public class Evaluation3 {
             Socket client = serverSocket.accept();
             System.out.println("Connected to client");
 
+            // Create a new thread for each connected client
             NewClient clientThread = new NewClient(client, clients, rooms);
             clients.add(clientThread);
             new Thread(clientThread).start();
+
+            // Broadcast a welcome message to the client
+            clientThread.sendMessageToAll("Welcome! You are connected to the server.");
         }
     }
 }
