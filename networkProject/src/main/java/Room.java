@@ -27,10 +27,12 @@ class Room {
     private Map<String, Integer> playerNames;
     private int round;
     private boolean started;
+    private boolean finished;
     public Room(String roomName) {
         this.roomName = roomName;
         this.playerNames =  new HashMap<>();
         this.round=0;
+        this.finished=false;
     }
 
     public String getRoomName() {
@@ -50,6 +52,14 @@ class Room {
     
     public void setStarted(boolean started) {
         this.started = started;
+    }
+    
+    public boolean getFinished() {
+        return finished;
+    }
+    
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
     
     public Map<String, Integer> getPlayersList() {

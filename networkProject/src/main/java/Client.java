@@ -20,7 +20,6 @@ public class Client {
     private Socket socket;
     private PrintWriter serverOutput;
     private BufferedReader serverInput;
-    private List<String> connectedUsers;
     private MainFrame mainFrame;
     private GameFrame gameFrame;
     private LoginFrame loginFrame;
@@ -31,7 +30,6 @@ public class Client {
       private PrintWriter out;
     private BufferedReader in;
     public Client() {
-        connectedUsers = new ArrayList<>();
         loginFrame = new LoginFrame(this);
     }
 
@@ -62,8 +60,9 @@ public class Client {
 
                     // Now that the connection is set up, show the MainFrame
                     SwingUtilities.invokeLater(() -> {
-                        mainFrame = new MainFrame(connectedUsers,this); // Pass connected users
+                        mainFrame = new MainFrame(username,this); // Pass connected users
                         mainFrame.setVisible(true);
+                        sendMessage("GET_USERS");
                         loginFrame.dispose();  // Close the login frame once the user is logged in
                     });
 
@@ -87,7 +86,7 @@ public class Client {
                 final String msg = message; 
                 System.out.println("Received message from server: " + message);
                 if (message.startsWith("USERS:")) {
-                    updateUserList(message.substring(6).split(","));
+                    updateUserList(message.substring(6));
                 } else if (message.startsWith("JOINED_ROOM:")) {
                   
                      showGameFrame(message);
@@ -100,7 +99,12 @@ public class Client {
                 } else if (message.startsWith("WINNERS:")) {
                    showWinner(message.substring(8));
                      
+                } else if (message.startsWith("GAME_ENDED")) {
+                   endGame();
+                     
                 }
+                else if (message.startsWith("NO_PLAYERS")) {
+                noPlayers();}
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -122,12 +126,10 @@ public class Client {
     
 
     // Update the user list from the server
-    private void updateUserList(String[] users) {
-        connectedUsers.clear();
-        Collections.addAll(connectedUsers, users);
-        System.out.println("Updated user list: " + connectedUsers);
+    private void updateUserList(String users) {
+        System.out.println("Updated user list: " + users);
         if (mainFrame != null) {
-            SwingUtilities.invokeLater(() -> mainFrame.updateUserList(connectedUsers));
+            SwingUtilities.invokeLater(() -> mainFrame.updateUserList(users));
         }
     }
     
@@ -142,6 +144,19 @@ public class Client {
             SwingUtilities.invokeLater(() -> gameFrame.updateUserListWithWinner(message));
         }
     }
+     
+     private void endGame() {
+        if (gameFrame != null) {
+            SwingUtilities.invokeLater(() -> gameFrame.endGame());
+        }
+    }
+
+     private void noPlayers() {
+        if (gameFrame != null) {
+            SwingUtilities.invokeLater(() -> gameFrame.noPlayers());
+        }
+    }
+
 
     // Method to show GameFrame and pass necessary data (like room info)
     private void showGameFrame(String message) {
@@ -175,12 +190,7 @@ public class Client {
         return username;
     }
 
-    // Setter for user list update listener
-    public void setUserListUpdateListener(UserListUpdateListener listener) {
-        if (mainFrame != null) {
-            mainFrame.setUserListUpdateListener(listener);
-        }
-    }
+  
 
     public static void main(String[] args) {
         // Start the Client application

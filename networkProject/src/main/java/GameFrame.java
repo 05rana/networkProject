@@ -25,7 +25,6 @@ public class GameFrame extends JFrame {
     private JButton leaveButton;
     private UserListUpdateListener userListUpdateListener;
     private Client client;
-
     // New components for question and answer
     private JLabel questionLabel;
     private JTextField answerTextField;
@@ -50,6 +49,7 @@ public class GameFrame extends JFrame {
         answerButton = new JButton("Answer");
         leaveButton = new JButton("Leave");
 
+       
         // Add listeners for buttons
         answerButton.addActionListener(new ActionListener() {
             @Override
@@ -135,13 +135,26 @@ public class GameFrame extends JFrame {
 
     // Update the user list when new users join
     public void updateUserList(String message) {
-        System.out.println("receieved updated message:"+message);
+       System.out.println("receieved updated message:"+message);
        onlinePlayersList.setText(formatFancyScoreBoard(message));  
     }
     
     public void updateUserListWithWinner(String message) {
-        System.out.println("receieved updated message:"+message);
+       System.out.println("receieved updated message:"+message);
        onlinePlayersList.setText(formatFancyWinnerText(message));  
+       setQuestionText("");
+    }
+    
+     public void endGame() {
+       System.out.println("ending Game");
+       onlinePlayersList.setText("Timer is up! Game ended.");  
+       setQuestionText("");
+    }
+     
+      public void noPlayers() {
+       System.out.println("ending Game");
+       onlinePlayersList.setText("There are no other Players! Game ended.");  
+       setQuestionText("");
     }
 
      private String formatFancyScoreBoard(String rawText) {

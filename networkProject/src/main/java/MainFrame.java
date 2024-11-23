@@ -15,31 +15,29 @@ import java.awt.event.*;
 import java.util.List;
 
 public class MainFrame extends JFrame {
-    private JList<String> onlinePlayersList;
+    private JTextArea onlinePlayersList;
     private DefaultListModel<String> onlinePlayersListModel;
     private JButton playButton;
     private JButton leaveButton;
     private UserListUpdateListener userListUpdateListener;
  private Client client;
  
-    public MainFrame(List<String> users, Client c) {
+    public MainFrame(String users, Client c) {
         // Set the title of the frame
         this.client = c;
         setTitle("Online Players");
 
         // Initialize the user list model
         onlinePlayersListModel = new DefaultListModel<>();
-        for (String user : users) {
-            if (user != null && !user.isEmpty()) {
-                onlinePlayersListModel.addElement(user);
-            }
-        }
 
         // Initialize the JList with the user list model
-        onlinePlayersList = new JList<>(onlinePlayersListModel);
-        onlinePlayersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        onlinePlayersList = new JTextArea(10, 30);
+        onlinePlayersList.setEditable(false);                // Make it non-editable
+        onlinePlayersList.setLineWrap(true);                 // Wrap lines if they exceed width
+        onlinePlayersList.setWrapStyleWord(true);            // Wrap at word boundaries
+System.out.println("1st time run: users are:"+users);
+        onlinePlayersList.setText(formatFancyScoreBoard(users));
         JScrollPane scrollPane = new JScrollPane(onlinePlayersList);
-
         // Initialize the Play and Leave buttons
         playButton = new JButton("Play");
         leaveButton = new JButton("Leave");
@@ -82,23 +80,31 @@ public class MainFrame extends JFrame {
     }
 
     // Update the user list when new users join
-    public void updateUserList(List<String> users) {
-        onlinePlayersListModel.clear();
-        if (users != null) {
-            for (String user : users) {
-                if (user != null && !user.isEmpty()) {
-                    onlinePlayersListModel.addElement(user);
-                }
-            }
+    public void updateUserList(String message) {
+       System.out.println("receieved updated message:"+message);
+       onlinePlayersList.setText(formatFancyScoreBoard(message));  
+    }
+
+     private String formatFancyScoreBoard(String names) {
+        // Split the names by comma
+        String[] players = names.split(",");
+        // Create a fancy output
+        StringBuilder output = new StringBuilder();
+        output.append("*************************************\n");
+        output.append("         * Online Players *          \n");
+        output.append("*************************************\n");
+        
+        for (String player : players) {
+            output.append("*  ").append(player.trim()).append("  *\n");
         }
+
+        output.append("*************************************\n");
+
+        // Print the fancy text
+         System.out.println("fancy text is :"+ output.toString());
+        return output.toString();
+    
     }
-
-    // Set the user list update listener
-    public void setUserListUpdateListener(UserListUpdateListener listener) {
-        this.userListUpdateListener = listener;
-    }
-
-
 
     // Handle Leave button click (disconnect the client, for example)
     private void onLeaveButtonClicked() {

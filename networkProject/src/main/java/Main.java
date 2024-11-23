@@ -18,7 +18,6 @@ public class Main {
     private static final int PORT = 9091;
     private static Map<String, Room> rooms = new HashMap<>();  // Maps room name to Room object
     private static Map<Socket, String> clientUsernames = new ConcurrentHashMap<>();
-    private static Set<PrintWriter> clientOutputs = new HashSet<>();
     
     public static void main(String[] args) {
         System.out.println("Server started on port " + PORT);
@@ -61,9 +60,9 @@ public class Main {
             } finally {
                 try {
                     clientUsernames.remove(clientSocket); // Remove the client from the user list
-                    clientOutputs.remove(out); // Remove the client's output stream from the list
                     clientSocket.close(); // Close the socket
                     System.out.println("Client disconnected.");
+                    broadcastUserList();
                     
                     if (assignedRoom != null) {
                     assignedRoom.removePlayer(username);
@@ -71,7 +70,15 @@ public class Main {
                     broadcastUserList(); // Update other clients about the disconnection
                     List<String> usersList = new ArrayList<>(assignedRoom.getPlayersList().keySet());
                      String message = "USERS_IN_ROOM:" + assignedRoom.toString();
-            broadcastToSpecificClients(message,usersList);}
+                    broadcastToSpecificClients(message,usersList);
+                    if(assignedRoom.getPlayersList().size() == 1 && assignedRoom.getStarted()) {
+                    System.out.println("No Other Players.");
+                     message = "NO_PLAYERS" ;
+                     broadcastToSpecificClients(message,usersList);
+                    
+                    }
+                    
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -85,7 +92,6 @@ public class Main {
               this.username = message.substring(9);  // Skipping the first 9 characters ("START_GAME:")
         
                clientUsernames.put(clientSocket,username);
-                clientOutputs.add(out);
                 System.out.println(username + " connected.");
                 broadcastUserList();
                
@@ -102,6 +108,7 @@ public class Main {
                      startWaitingTimer();
                  }
             } else if (message.startsWith("GET_USERS")) {
+                broadcastUserList();
             } else if (message.startsWith("ANSWER:")) {
                
                    String answer=message.substring(7);
@@ -127,6 +134,7 @@ public class Main {
                                 assignedRoom.updatePlayerScore(username,assignedRoom.getPlayersList().get(username)+1);
                                  List<String> usersList = new ArrayList<>(assignedRoom.getPlayersList().keySet());
                                 broadcastToSpecificClients("WINNERS:"+assignedRoom.getWinnerString(),usersList);
+                                assignedRoom.setFinished(true);
                            }
                            
                    
@@ -165,8 +173,31 @@ public class Main {
             //TODO set timer
             return newRoom;
         }
+       
+         
+                 private void broadcastUserList() {
+                     String message = "USERS:" + String.join(",", clientUsernames.values());
+    for (Map.Entry<Socket, String> entry : clientUsernames.entrySet()) {
+        Socket clientSocket = entry.getKey();
+        String username = entry.getValue();
 
-         private static void broadcastToSpecificClients(String message, List<String> targetUsernames) {
+        // Check if the current client username matches any in the targetUsernames list
+            try {
+            System.out.print("broadcasting to all message:"+message);
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                out.println(message); // Send the message to the client
+                System.out.println("Sent message to " + username + ": " + message);
+            } catch (IOException e) {
+                System.err.println("Error sending message to " + username);
+                e.printStackTrace();
+            }
+    }
+}
+         private  void broadcastToSpecificClients(String message, List<String> targetUsernames) {
+             
+             if (!assignedRoom.getFinished()){
+             
+             
     for (Map.Entry<Socket, String> entry : clientUsernames.entrySet()) {
         Socket clientSocket = entry.getKey();
         String username = entry.getValue();
@@ -184,6 +215,7 @@ public class Main {
             }
         }
     }
+             }
 }
         // Broadcast the updated player list to all clients in the room
          private void broadcastRoomUpdate() {
@@ -203,6 +235,7 @@ public class Main {
              if( assignedRoom!=null ){
                  assignedRoom.setRound(1);
                  assignedRoom.setStarted(true);
+                 endGameTimer();
             String q = "QUESTION:⚠Question 1: What does the Morse code ... --- ... represent?"; //SOS
              List<String> usersList = new ArrayList<>(assignedRoom.getPlayersList().keySet());
             broadcastToSpecificClients(q,usersList);
@@ -227,15 +260,19 @@ public class Main {
             broadcastToSpecificClients(q,usersList);
              }
         }
-         private void broadcastUserList() {
-    String userList = "USERS:" + String.join(",", clientUsernames.values());
-    System.out.println("broadcasting:"+clientUsernames.values());
-    for (PrintWriter writer : clientOutputs) {
-        writer.println(userList);
+
+ private void endGameTimer() {
+        Timer gameEndTimer = new Timer();
+        gameEndTimer.schedule(new TimerTask() {
+            public void run() {
+                String message = "GAME_ENDED" ;
+            System.out.println("broadcasted message:"+ message);
+             List<String> usersList = new ArrayList<>(assignedRoom.getPlayersList().keySet());
+            broadcastToSpecificClients(message,usersList);
+            assignedRoom.setFinished(true);
+            }
+        }, 30000); // 30 seconds
     }
-}
-         
-         
            private void startWaitingTimer() {
         Timer gameStartTimer = new Timer();
         gameStartTimer.schedule(new TimerTask() {
