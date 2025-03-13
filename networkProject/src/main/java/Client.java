@@ -13,7 +13,7 @@ import java.util.*;
 import javax.swing.*;
 
 public class Client {
-    private static final String SERVER_ADDRESS = "localhost";
+    private static final String SERVER_ADDRESS = "10.6.193.62";
     private static final int SERVER_PORT = 9091;
 
     private String username;
